@@ -3,15 +3,15 @@ import { login as apiLogin, signup as apiSignup, getProfile, logout as apiLogout
 import axios from "axios";
 
 interface User {
-  id: string;
-  email: string;
+  userId: string;
+  tenantId: string;
 }
 
 interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
-  login: (tenantName: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   signup: (tenantName: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -23,20 +23,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
-  async function login(tenantName: string, email: string, password: string) {
-    const { accessToken, refreshToken } = await apiLogin(tenantName, email, password);
-    setAccessToken(accessToken);
-    setRefreshToken(refreshToken);
-    // const profile = await getProfile(accessToken);
-    // setUser(profile.user);
-  }
-
-  async function signup(tenantName: string, email: string, password: string) {
-    const {accessToken, refreshToken} = await apiSignup(tenantName, email, password);
+  async function login(email: string, password: string) {
+    const { accessToken, refreshToken } = await apiLogin(email, password);
     setAccessToken(accessToken);
     setRefreshToken(refreshToken);
     const profile = await getProfile(accessToken);
-    // setUser(profile.user);
+    setUser({ userId: profile.userId, tenantId: profile.tenantId});
+  }
+
+  async function signup(tenantName: string, email: string, password: string) {
+    const response = await apiSignup(tenantName, email, password);
+    const {accessToken, refreshToken} = response;
+    setAccessToken(accessToken);
+    setRefreshToken(refreshToken);
+    const profile = await getProfile(accessToken);
+    console.log(profile);
+    setUser({ userId: profile.userId, tenantId: profile.tenantId});
   }
 
   async function logout() {
