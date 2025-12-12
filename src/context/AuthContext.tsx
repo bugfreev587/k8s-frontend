@@ -37,7 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(accessToken);
     setRefreshToken(refreshToken);
     const profile = await getProfile(accessToken);
-    console.log(profile);
     setUser({ userId: profile.userId, tenantId: profile.tenantId});
   }
 
@@ -53,26 +52,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ⏳ Proactive refresh effect
   useEffect(() => {
     if (!accessToken || !refreshToken) return;
-
-    // Decode JWT to get expiry (exp is in seconds since epoch)
-    const payload = JSON.parse(atob(accessToken.split(".")[1]));
-    const exp = payload.exp * 1000; // convert to ms
-    const now = Date.now();
-
-    // Refresh 1 minute before expiry
-    const refreshTime = exp - now - 60_000;
-    if (refreshTime <= 0) return; // already expired, will be handled by interceptor
-
+    
+    const refreshDelay = 2 * 60 * 1000; // 14 minutes in milliseconds
     const timer = setTimeout(async () => {
       try {
-        const {accessToken} = await apiRefresh(refreshToken);
-        setAccessToken(accessToken);
+        const {accessToken: newAccessToken, refreshToken: newRefreshToken} = await apiRefresh(accessToken, refreshToken);
+        setAccessToken(newAccessToken);  
+        setRefreshToken(newRefreshToken);
       } catch {
         // logout on failure
         logout();
         window.location.href = "/login";
       }
-    }, refreshTime);
+    }, refreshDelay);
     return () => clearTimeout(timer);
   }, [accessToken, refreshToken]);
 

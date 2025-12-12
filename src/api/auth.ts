@@ -24,12 +24,12 @@ export async function getProfile(token: string) {
   return res.data;
 }
 
-export async function refreshToken(token: string) {
-  const res = await axios.post(`${API}/refresh`, { token });
+export async function refreshToken(accessToken: string, refreshToken: string) {
+  const res = await axios.post(`${API}/v1/auth/refresh`, {access_token: accessToken, refresh_token: refreshToken });
   return res.data;
 }
 
 export async function logout(refreshToken: string) {
-  const res = await axios.post(`${API}/v1/auth/logout`, { token: refreshToken });
+  const res = await axios.post(`${API}/v1/auth/logout`, { refresh_token: refreshToken });
   return res.data;
 }
